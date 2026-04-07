@@ -21,7 +21,7 @@ const config = {
 };
 
 /*-------------------------------- Constants --------------------------------*/
-const STATES = ['IDLE', 'FILLING', 'WASHING', 'DRAINING', 'RINSING', 'SANITIZING', 'COMPLETE', 'ERROR'];
+const STATES = ['IDLE', 'FILLING', 'WASHING', 'DRAINING', 'RINSING', 'DWELLING', 'SANITIZING', 'COMPLETE', 'ERROR'];
 
 const cycleDurations = {
 	filling: 60000, // TODO: temp time, change to real value. exits when guards pass (pressure and temp, see 'Machine settings" in gpio_config.py )
