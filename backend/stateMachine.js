@@ -1,4 +1,3 @@
-/*--------------------------------- Imports ---------------------------------*/
 // TODO: replace with HTTP calls to Python hardware layer
 const relays = {
 	DRAIN: 1,
@@ -20,7 +19,6 @@ const config = {
 	maxPressure: 55
 };
 
-/*-------------------------------- Constants --------------------------------*/
 const STATES = ['IDLE', 'FILLING', 'WASHING', 'DRAINING', 'RINSING', 'DWELLING', 'SANITIZING', 'COMPLETE', 'ERROR'];
 
 const cycleDurations = {
@@ -35,11 +33,9 @@ const cycleDurations = {
     dwellRinse: 7000
 };
 
-/*---------------------------- Variables (state) ----------------------------*/
 let currentState = 'IDLE';
 let stateStartTime = null;
 
-/*-------------------------------- Functions --------------------------------*/
 let startupCheck = () => {
     let errors = [];
 
@@ -128,6 +124,10 @@ let runCycle = async () => {
     transitionState('COMPLETE')
     relays.turnOffAll()
 };
-/*----------------------------- Event Listeners -----------------------------*/
 
 
+module.exports = {
+	runCycle,
+	transitionState,
+	getState: () => currentState, // always reads the current value
+};
