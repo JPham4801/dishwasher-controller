@@ -58,13 +58,17 @@ let startupCheck = () => {
     }
 }
 
+let onStateChange = null; // holds callback
+
 let transitionState = (newState) => {
 	if (!STATES.includes(newState)) {
-		return `Invalid state: ${newState}`; // just return directly
+		return `Invalid state: ${newState}`;
 	} else {
 		currentState = newState;
 		stateStartTime = Date.now();
 		console.log(`State changed to ${newState}`);
+
+		if (onStateChange) onStateChange(newState); // notify the listeners on state change
 		return true;
 	}
 };
@@ -125,9 +129,17 @@ let runCycle = async () => {
     relays.turnOffAll()
 };
 
+let emergencyStop = () => {
+    relays.turnOffAll();
+    transitionState('ERROR');
+    
+}
+
 
 module.exports = {
-	runCycle,
-	transitionState,
+    runCycle,
+    emergencyStop,
+    transitionState,
+    onStateChange,
 	getState: () => currentState, // always reads the current value
 };
