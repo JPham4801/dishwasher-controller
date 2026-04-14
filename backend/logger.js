@@ -1,6 +1,5 @@
 const fs = require('fs');
 const path = require('path');
-
 const log = async (type, message, details = {}) => {
     const date = new Date().toISOString();
 

@@ -9,16 +9,18 @@ import SensorReadings from './components/SensorReadings';
 function App() {
 	const [currentState, setCurrentState] = useState('IDLE');
     const [error, setError] = useState(null); // the error message, null if none
-    const [sensors, setSensors] = useState({
-			door: false,
-			emergencyStop: false,
+    
+	// TODO: get real sensor data from hardware for production
+	const [sensors, setSensors] = useState({
+			isDoorClosed: true,
+			isEmergencyStopIdle: true,
 		});
 
 	useEffect(() => {
 		const socket = io('http://localhost:3000');
 
-		socket.on('stateChange', (newState) => {
-			setCurrentState(newState);
+		socket.on('stateChange', ({ state }) => {
+			setCurrentState(state);
 		});
 
 		socket.on('error', (newError) => {
@@ -36,7 +38,7 @@ function App() {
 
 	return (
 		<div>
-			<ControlPanel />
+			<ControlPanel currentState={currentState} />
 			<CycleDisplay currentState={currentState} />
 			<Timer currentState={currentState} />
 			<ErrorAlert error={error} />

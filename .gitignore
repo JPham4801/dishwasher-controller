@@ -5,9 +5,13 @@ node_modules/
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
 package-lock.json
 dist/
+dist-ssr/
 build/
+*.local
 .env
 .env.local
 .env.*.local
@@ -20,7 +24,6 @@ __pycache__/
 *.pyo
 *.pyd
 *.pyc.*
-*.log
 *.sqlite3
 *.db
 .venv/
@@ -33,7 +36,7 @@ env/
 logs/
 *.log
 
-# If you want to keep the folder but not files:
+# If you want to keep the folder but not the files:
 # logs/*
 # !logs/.gitkeep
 
@@ -42,17 +45,24 @@ logs/
 # =========================
 .DS_Store
 Thumbs.db
-.vscode/
+.vscode/*
+!.vscode/extensions.json
 .idea/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
 *.swp
 *.swo
+*.sw?
 
 # =========================
-# Build / temp files
+# Build / Temp files
 # =========================
 tmp/
 temp/
 .cache/
+.vite/
 coverage/
 
 # =========================

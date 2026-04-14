@@ -9,63 +9,79 @@ const relays = {
 	turnOffAll: () => console.log('All relays off'),
 };
 
+// TODO: returns true for all sensors in dev. remove and replace with real values
 const sensors = {
-    readSensor: (sensor) => true  // returns true for all sensors in dev
+	readSensor: (sensor) => true,
 };
 
+
+// TODO: 
 const config = {
 	minWaterTemp: 120,
 	minPressure: 45,
-	maxPressure: 55
+	maxPressure: 55,
 };
 
-const STATES = ['IDLE', 'FILLING', 'WASHING', 'DRAINING', 'RINSING', 'DWELLING', 'SANITIZING', 'COMPLETE', 'ERROR'];
+const STATES = ['STARTING', 'IDLE', 'FILLING', 'WASHING', 'DRAINING', 'RINSING', 'DWELLING', 'SANITIZING', 'COMPLETE', 'ERROR'];
 
+// TODO: uncomment below for production
+// const cycleDurations = {
+// 	filling: 60000, // TODO: temp time, change to real value. exits when guards pass (pressure and temp, see 'Machine settings" in gpio_config.py )
+// 	washing: 45000,
+// 	washingDetergent: 10000,
+// 	draining: 15000,
+// 	rinsing: 30000,
+// 	sanitizing: 10000,
+// 	dwelling: 15000,
+// 	dwellDrain: 8000,
+// 	dwellRinse: 7000,
+// };
+
+// TODO: Testing only. Remove for production
 const cycleDurations = {
-	filling: 60000, // TODO: temp time, change to real value. exits when guards pass (pressure and temp, see 'Machine settings" in gpio_config.py )
-    washing: 45000,
-    washingDetergent: 10000,
-    draining: 15000,
-    rinsing: 30000,
-    sanitizing: 10000,
-    dwelling: 15000,
-    dwellDrain: 8000,
-    dwellRinse: 7000
+	filling: 6000,
+	washing: 4500,
+	washingDetergent: 1000,
+	draining: 1500,
+	rinsing: 3000,
+	sanitizing: 1000,
+	dwelling: 1500,
+	dwellDrain: 800,
+	dwellRinse: 700,
 };
 
 let currentState = 'IDLE';
-let stateStartTime = null;
 
 let startupCheck = () => {
-    let errors = [];
+	let errors = [];
 
-    if (sensors.readSensor('DOOR') === false) {
-        errors.push('Door is open')
-    }
-    if (sensors.readSensor('WATER_LEVEL') === false) {
-        errors.push('Water level too low')
-    }
-    if (sensors.readSensor('PRESSURE') === false) {
-        errors.push('Pressure out of range')
-    }
-    if (sensors.readSensor('EMERGENCY_STOP') === true) {
-        errors.push('Emergency stop is active');
-    }
-    if (errors.length === 0) {
-        return true;
-    } else {
-        return errors
-    }
-}
+	if (sensors.readSensor('IS_DOOR_CLOSED') === false) {
+		errors.push('Door is open');
+	}
+	if (sensors.readSensor('WATER_LEVEL') === false) {
+		errors.push('Water level too low');
+	}
+	if (sensors.readSensor('PRESSURE') === false) {
+		errors.push('Pressure out of range');
+	}
+	if (sensors.readSensor('IS_EMERGENCY_STOP_IDLE') === false) {
+		errors.push('Emergency Stop Pressed');
+	}
+	if (errors.length === 0) {
+		return true;
+	} else {
+		console.log(errors)
+		return errors;
+	}
+};
 
-let onStateChange = null; // holds callback
+let onStateChange = null; // holds callback for state
 
 let transitionState = (newState) => {
 	if (!STATES.includes(newState)) {
 		return `Invalid state: ${newState}`;
 	} else {
 		currentState = newState;
-		stateStartTime = Date.now();
 		console.log(`State changed to ${newState}`);
 
 		if (onStateChange) onStateChange(newState); // notify the listeners on state change
@@ -80,66 +96,69 @@ let runCycle = async () => {
 	if (check !== true) {
 		transitionState('ERROR');
 		return check;
-    }
-    
-    relays.turnOffAll();
+	}
 
-    // Filling
-    transitionState('FILLING');
-    relays.setRelay('WATER', true)
-    await wait(cycleDurations.filling)
-    relays.turnOffAll()
+	// Starting cycle
+	transitionState('STARTING');
+	relays.turnOffAll();
 
-    // Washing
-    transitionState('WASHING')
-    relays.setRelay('DETERGENT', true) // May add timer if needed for less detergent
-    relays.setRelay('RINSE', true)
-    await wait(cycleDurations.washing)
-    relays.turnOffAll()
+	// Filling
+	transitionState('FILLING');
+	relays.setRelay('WATER', true);
+	await wait(cycleDurations.filling);
+	relays.turnOffAll();
 
-    // Draining
-    transitionState('DRAINING');
-    relays.setRelay('DRAIN', true)
-    await wait(cycleDurations.draining)
-    relays.turnOffAll()
+	// Washing
+	transitionState('WASHING');
+	relays.setRelay('DETERGENT', true); // May add timer if needed for less detergent
+	relays.setRelay('RINSE', true);
+	await wait(cycleDurations.washing);
+	relays.turnOffAll();
 
-    // Rinsing
-    transitionState('RINSING');
-    relays.setRelay('RINSE', true)
-    await wait(cycleDurations.rinsing)
-    relays.turnOffAll()
+	// Draining
+	transitionState('DRAINING');
+	relays.setRelay('DRAIN', true);
+	await wait(cycleDurations.draining);
+	relays.turnOffAll();
 
-    // Sanitizing
-    transitionState('SANITIZING');
-    relays.setRelay('SANITIZE', true)
-    await wait(cycleDurations.sanitizing)
-    relays.turnOffAll()
+	// Rinsing
+	transitionState('RINSING');
+	relays.setRelay('RINSE', true);
+	await wait(cycleDurations.rinsing);
+	relays.turnOffAll();
 
-    // Dwelling
-    transitionState('DWELLING');
-    relays.setRelay('DRAIN', true)
-    relays.setRelay('RINSE', true)
-    await wait(cycleDurations.dwellRinse)
-    relays.setRelay('RINSE', false)
-    await wait(cycleDurations.dwellDrain)
-    relays.turnOffAll()
+	// Sanitizing
+	transitionState('SANITIZING');
+	relays.setRelay('SANITIZE', true);
+	await wait(cycleDurations.sanitizing);
+	relays.turnOffAll();
 
-    // Complete
-    transitionState('COMPLETE')
-    relays.turnOffAll()
+	// Dwelling
+	transitionState('DWELLING');
+	relays.setRelay('DRAIN', true);
+	relays.setRelay('RINSE', true);
+	await wait(cycleDurations.dwellRinse);
+	relays.setRelay('RINSE', false);
+	await wait(cycleDurations.dwellDrain);
+	relays.turnOffAll();
+
+	// Complete and return to IDLE
+	transitionState('COMPLETE');
+	relays.turnOffAll();
+	transitionState('IDLE');
 };
 
-let emergencyStop = () => {
-    relays.turnOffAll();
-    transitionState('ERROR');
-    
-}
-
+let isEmergencyStopIdle = () => {
+	relays.turnOffAll();
+	transitionState('ERROR');
+};
 
 module.exports = {
-    runCycle,
-    emergencyStop,
-    transitionState,
-    onStateChange,
+	runCycle,
+	isEmergencyStopIdle,
+	transitionState,
+	setOnStateChange: (cb) => {
+		onStateChange = cb;
+	},
 	getState: () => currentState, // always reads the current value
 };
